@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #data {
+            border: solid black 2px;
+            text-align: center;
+        }
+
+        #data td {
+            border: solid black 2px;
+            text-align: center;
+        }
+
+        #updateMenu {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background-color: gray;
+            opacity: 0.5;
+        }
+
+        #windowMenu {
+            width: 10vw;
+            height: 5vh;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+<div id="updateMenu">
+    <div id="windowMenu">
+        <input id="carmodel" maxlength="30" minlength="3" type="text">
+        <input id="year" max="2022" min="1950" type="number"/>
+        <input id="submit" type="submit">
+    </div>
+</div>
+<a href="/">Strona Index</a>
+<table id="data">
+    <tr>
+        <th>nr</th>
+        <th>UUID</th>
+        <th>Model</th>
+        <th>Rocznik</th>
+        <th>Airbags</th>
+        <th>Color</th>
+        <th>DELETE</th>
+        <th>UPDATE</th>
+    </tr>
+</table>
+<script>
+
+    fetchPostAsync = async () => {
+
+        const options = {
+            method: "POST",
+            body: null,
+        };
+
+        let response = await fetch("/text", options)
+
+        if (!response.ok)
+            return response.status
+        else
+            return await response.json() // response.json
+
+    }
+    window.onload = async () => {
+        console.log("KLIK")
+        let json = await fetchPostAsync()
+        createTable(json);
+        console.log(json)
+    }
+
+    function createTable(json) {
+        console.log(json)
+        for (let i = json.length - 1; i >= 0; i--) {
+            let arr = [i, json[i].uuid, json[i].model, json[i].year, {
+                airbag1: json[i].driver,
+                airbag2: json[i].passenger,
+                airbag3: json[i].side,
+                airbag4: json[i].rear
+            }, json[i].color]
+            let uuid = json[i].uuid;
+            let tr = document.createElement("tr")
+            arr.forEach(element => {
+                if (typeof (element) == "object") {
+                    let td = document.createElement("td")
+                    td.innerText = element.airbag1.name + ": " + element.airbag1.value + ", " + element.airbag2.name + ": " + element.airbag2.value + ", " + element.airbag3.name + ": " + element.airbag3.value + ", " + element.airbag4.name + ": " + element.airbag4.value;
+                    tr.appendChild(td)
+                } else if (typeof (element) == "string" && element[0] == "#") {
+                    let td = document.createElement("td")
+                    td.bgColor = element;
+                    tr.appendChild(td)
+                } else {
+                    let td = document.createElement("td")
+                    td.innerText = element
+                    tr.appendChild(td)
+                }
+            })
+            let td = document.createElement("td")
+            let td2 = document.createElement("td")
+            let delbutton = document.createElement("button")
+            delbutton.addEventListener("click", async function () {
+                await delCar(uuid);
+            })
+            delbutton.textContent = "DELETE";
+            let updbutton = document.createElement("button")
+            //updbutton.addEventListener("click", async function () {
+            updbutton.onclick = async () => {
+                await showUpdateMenu(json);
+                document.getElementById("submit").onclick = async () => {
+                    console.log(json[i])
+                    await updCar(json[i]);
+                    document.getElementById("updateMenu").style.display = "none";
+                    document.getElementById("windowMenu").style.display = "none";
+                    document.getElementById("carmodel").value = "";
+                    document.getElementById("year").value = "";
+                }
+            }
+            updbutton.textContent = "UPDATE";
+            td.appendChild(delbutton)
+            td2.appendChild(updbutton)
+            tr.appendChild(td)
+            tr.appendChild(td2)
+            document.getElementById("data").appendChild(tr)
+        }
+    }
+
+    delfetchPostAsync = async (uuid) => {
+        const options = {
+            method: "POST",
+            body: uuid,
+        };
+
+        let response = await fetch("/DELETE", options)
+
+        if (!response.ok)
+            return response.status
+        else
+            return await response.text() // response.json
+
+    }
+    delCar = async (uuid) => {
+        let news = await delfetchPostAsync(uuid)
+        document.getElementById("data").innerHTML = `<tr><th>nr</th><th>UUID</th><th>Model</th><th>Rocznik</th><th>Airbags</th><th>Color</th><th>DELETE</th><th>UPDATE</th></tr>`;
+        let json = await fetchPostAsync()
+        createTable(json);
+    }
+
+    updfetchPostAsync = async (json) => {
+        const data = JSON.stringify({
+            uuid: json.uuid,
+            model: document.getElementById("carmodel").value,
+            year: document.getElementById("year").value,
+            driver: json.driver,
+            passenger: json.passenger,
+            rear: json.rear,
+            side: json.side,
+            color: json.color
+        })
+
+        const options = {
+            method: "POST",
+            body: data,
+        };
+
+        let response = await fetch("/UPDATE", options)
+
+        if (!response.ok)
+            return response.status
+        else
+            return await response.text() // response.json
+
+    }
+
+    updCar = async (json) => {
+        let news = await updfetchPostAsync(json)
+        news = JSON.parse(news)
+        document.getElementById("data").innerHTML = `<tr><th>nr</th><th>UUID</th><th>Model</th><th>Rocznik</th><th>Airbags</th><th>Color</th><th>DELETE</th><th>UPDATE</th></tr>`;
+        createTable(news);
+    }
+
+    function showUpdateMenu() {
+        document.getElementById("updateMenu").style.display = "flex";
+        document.getElementById("windowMenu").style.display = "flex";
+        return "x"
+    }
+</script>
+</body>
+</html>

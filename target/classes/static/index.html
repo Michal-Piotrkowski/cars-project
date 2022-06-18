@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<input id="carmodel" maxlength="30" minlength="3" type="text">
+<input id="year" max="2022" min="1950" type="number"/>
+<label>poduszki powietrzne: kierowca | pasażer | tylna kanapa | boczne z tyłu:
+    <input id="driver" type="checkbox"/>
+    <input id="passenger" type="checkbox">
+    <input id="rear" type="checkbox">
+    <input id="side" type="checkbox">
+</label>
+<input id="color" type="color">
+<button id="bt">PRZEŚLIJ</button>
+<div id="links">
+    <a alt="TEXT" href="/text.html">Strona z danymi</a>
+</div>
+<script>
+    start = async () => {
+        let json = await fetchPostAsync()
+        console.log(json)
+    }
+
+    fetchPostAsync = async () => {
+        const data = JSON.stringify({
+            model: document.getElementById("carmodel").value,
+            year: document.getElementById("year").value,
+            driver: {name: "driver", value: document.getElementById("driver").checked},
+            passenger: {name: "passenger", value: document.getElementById("passenger").checked},
+            rear: {name: "rear", value: document.getElementById("rear").checked},
+            side: {name: "side", value: document.getElementById("side").checked},
+            color: document.getElementById("color").value
+        })
+
+        const options = {
+            method: "POST",
+            body: data,
+        };
+
+        let response = await fetch("/add", options)
+
+        if (!response.ok)
+            return response.status
+        else
+            return await response.json() // response.json
+
+    }
+    document.getElementById("bt").onclick = async () => {
+        console.log("KLIK")
+        if (document.getElementById("carmodel").value.length == 0) {
+            alert("PODAJ NAZWĘ AUTA!")
+            return
+        } else if (document.getElementById("carmodel").value.length < 3) {
+            alert("PODAJ PRAWDZIWĄ NAZWĘ AUTA!")
+            return
+        }
+
+        if (document.getElementById("year").value == undefined) {
+            alert("PODAJ ROK PRODUKCJI AUTA!")
+            return
+        } else if (document.getElementById("year").value > 2022 || document.getElementById("year").value < 1950) {
+            alert("PODAJ PRAWDZIWĄ DATĘ PRODUKCJI AUTA!")
+            return
+        }
+        let json = await fetchPostAsync()
+        alert(JSON.stringify(json, null, 5))
+    }
+
+</script>
+</body>
+</html>
